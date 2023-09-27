@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatInterface", "ChatInterface\ChatInterface.csproj", "{0DDCD2E5-60BC-44B8-9BF2-B2DA0006AB47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatAbastraction", "ChatAbastraction\ChatAbastraction.csproj", "{96E4E86F-1FFB-48F6-95E5-A56470A90B42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "ChatServer\ChatServer.csproj", "{034283DC-67E4-4D1A-8BE6-2983210F46FA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatFrontEnd", "ChatFrontEnd\ChatFrontEnd.csproj", "{346B6F61-0B70-47BD-9891-8A34DFB9F989}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0DDCD2E5-60BC-44B8-9BF2-B2DA0006AB47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DDCD2E5-60BC-44B8-9BF2-B2DA0006AB47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DDCD2E5-60BC-44B8-9BF2-B2DA0006AB47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DDCD2E5-60BC-44B8-9BF2-B2DA0006AB47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96E4E86F-1FFB-48F6-95E5-A56470A90B42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96E4E86F-1FFB-48F6-95E5-A56470A90B42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96E4E86F-1FFB-48F6-95E5-A56470A90B42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96E4E86F-1FFB-48F6-95E5-A56470A90B42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{034283DC-67E4-4D1A-8BE6-2983210F46FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{034283DC-67E4-4D1A-8BE6-2983210F46FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{034283DC-67E4-4D1A-8BE6-2983210F46FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{034283DC-67E4-4D1A-8BE6-2983210F46FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{346B6F61-0B70-47BD-9891-8A34DFB9F989}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{346B6F61-0B70-47BD-9891-8A34DFB9F989}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{346B6F61-0B70-47BD-9891-8A34DFB9F989}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{346B6F61-0B70-47BD-9891-8A34DFB9F989}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
