@@ -17,49 +17,29 @@ using ChatAbastraction;
 namespace ChatFrontEnd {
     public partial class Display : Form {
 
-        private object _client_semaphor = new object();
         private object _stream_semaphor = new object();
         private object _msg_queue_semaphor = new object();
 
-        private TcpClient _Client = null!;
-
-        private Queue<string> MessageDisplay {
-            get {
-                lock (_msg_queue_semaphor) return MessageDisplay;
-            }
-            set {
-                lock (_msg_queue_semaphor) MessageDisplay = value;
-            }
-        }
+        private Queue<string> MessageDisplay = null!;
 
         private Thread ReadThread = null!;
 
-        public TcpClient Client {
-            get {
-                lock (_client_semaphor) return _Client;
-            }
-            set {
-                lock (_client_semaphor) _Client = value;
-            }
-        }
+        public TcpClient Client = null!;
+
+        private string Name = null!;
 
         private bool ValidIp = false;
         private bool ValidPort = false;
 
-        private NetworkStream Stream {
-            get {
-                lock (_stream_semaphor) return Stream;
-            }
-            set {
-                lock (_stream_semaphor) Stream = value;
-            }
-        }
+        private NetworkStream Stream = null!;
 
         private BinaryWriter Writer = null!;
 
         public Display() {
             InitializeComponent();
-            MessageDisplay = new Queue<string>();
+            lock (_msg_queue_semaphor) {
+                MessageDisplay = new Queue<string>();
+            }
         }
 
         private void on_ButtonMouseClick(object sender, MouseEventArgs e) {
@@ -83,6 +63,8 @@ namespace ChatFrontEnd {
                 return;
             }
 
+            Name = txb_NicknameInput.Text;
+
             TcpClient client = new TcpClient();
 
             Task.Run(() => {
@@ -94,21 +76,42 @@ namespace ChatFrontEnd {
                 }
 
                 Client = client;
-                Stream = Client.GetStream();
+                lock (_stream_semaphor)
+                    Stream = Client.GetStream();
 
                 ReadThread = new Thread(() => {
-                    BinaryReader reader = new BinaryReader(Stream);
+                    BinaryReader reader = null!;
+                    lock (_stream_semaphor)
+                        reader = new BinaryReader(Stream);
 
                     while (true) {
                         if (Stream.DataAvailable) {
                             string msg = reader.ReadString();
                             MessageDisplay.Enqueue(msg);
                         }
+
+                        lock (_msg_queue_semaphor) {
+
+                            while (MessageDisplay.Count() > 10) {
+                                MessageDisplay.Dequeue();
+                            }
+
+                            string msg_disp = "";
+
+                            foreach (string message in MessageDisplay) {
+                                msg_disp += message + Environment.NewLine;
+                            }
+
+                            rtb_MessageDisplay.Text = msg_disp;
+                        }
                     }
                 });
                 ReadThread.Start();
 
-                Writer = new BinaryWriter(Stream);
+                lock (_stream_semaphor) {
+                    Writer = new BinaryWriter(Stream);
+                    Writer.Write(name);
+                }
 
                 MessageBox.Show("Connection to server established", "Success", MessageBoxButtons.OK);
             });
@@ -159,6 +162,10 @@ namespace ChatFrontEnd {
             if (msg.Length < 1) return;
 
             Writer.Write(msg);
+            lock (_msg_queue_semaphor) {
+                MessageDisplay.Enqueue($"{Name}: {msg}");
+            }
+            txb_MessageInput.Text = "";
         }
 
         ~Display() {

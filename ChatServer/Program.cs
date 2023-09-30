@@ -123,6 +123,7 @@ class ChatServerService {
 
                 string name = connection.Name;
                 Connections.Add(name, connection);
+                Console.WriteLine($"Add conncetion to: {name}");
             });
             thread.Start();
         }
