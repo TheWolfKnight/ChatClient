@@ -23,15 +23,25 @@ namespace ChatAbastraction {
         private BinaryReader Reader;
         private BinaryWriter Writer;
 
-        public Connection(string name, Socket conn) {
-            _name = name;
+        public Connection(Socket conn) {
             Conn = conn;
             Stream = new NetworkStream(conn);
             Reader = new BinaryReader(Stream);
             Writer = new BinaryWriter(Stream);
+
+            Writer.Write("Send name");
+            string name = Reader.ReadString();
+
+            if (name == null) {
+                Writer.Write("Could not get name");
+                Conn.Close();
+                throw new Exception("Failed to get a username");
+            }
+
+            Name = name;
         }
 
-        public bool WriteDate(string data) {
+        public bool TryWriteDate(string data) {
             try {
                 Writer.Write(data);
                 return true;

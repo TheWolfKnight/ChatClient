@@ -65,7 +65,8 @@ public class Program {
     public static Thread StartChatServer(TcpListener listener) {
 
         Thread chat_server_thread = new Thread(() => {
-
+            ChatServerService chat = new ChatServerService(listener);
+            chat.Handle();
         });
 
         chat_server_thread.Start();
@@ -77,46 +78,79 @@ public class Program {
 }
 
 class ChatServerService {
+    private object connection_semaphor = new object();
+    private Dictionary<string, Connection> _Connections = new Dictionary<string, Connection>();
 
     private readonly TcpListener Listener = null!;
-    private readonly List<Connection> Connections = new List<Connection>();
 
-    public ChatServerService(TcpListener listener) {
-        Listener = listener;
+    // O(1) lookup
+    public Dictionary<string, Connection> Connections {
+        get {
+            lock (connection_semaphor) return _Connections;
+        }
+        set {
+            lock (connection_semaphor) _Connections = value;
+        }
     }
 
-    public IEnumerable<Connection> GetIncommingReads() {
-        foreach (Connection connection in Connections) {
-            if (connection.Stream.DataAvailable) yield return connection;
-        }
+    public ChatServerService(TcpListener listener) => Listener = listener;
+
+    public IEnumerable<(string name, Connection conn)> GetIncommingReads() {
+        foreach ((string name, Connection conn) in Connections )
+            if (conn.Stream.DataAvailable) yield return (name, conn);
         yield break;
     }
 
-    /*
-     COMMS SPECS:
-        HEADER DEFINITION:
-            <{SCOPE} {INSTRUCTION}>{OPTIOANL DATA}</{SCOPE} {INSTRUCTION}>
-            SCOPE:
-                LEN: 3 char
-                SCOPES: -HDR header
-                        -PUB public
-                        -PRI private
-                        -SND sender
-                        -RCV reciver
-                        -USR user
-            INSTRUCTION
-                LEN: 3 char
-                INSTRUCTIONS: -MSG message
-                              -CNT count
-                              -LVN leaving
-                              -JON Join
-        EXAMPLE HEADERS
-            <HDR CNT>3</HDR CNT>
-            <PUB MSG/>
-            <SND MSG>User123</SND MSG>
-            {MESSAGE FOR HERE ON OUT}
-     */
+    public void Handle() {
+        while (true) {
+            GetNewConnections();
+            HandleIncomingRequests();
+        }
+    }
 
+    private void GetNewConnections() {
+        while (Listener.Pending()) {
+            Socket socket = Listener.AcceptSocket();
+
+            Thread thread = new Thread(() => {
+                Connection connection;
+                try {
+                    connection = new Connection(socket);
+                } catch (Exception) {
+                    Console.WriteLine("Could not get a connection");
+                    return;
+                }
+
+                string name = connection.Name;
+                Connections.Add(name, connection);
+            });
+            thread.Start();
+        }
+    }
+
+    private void HandleIncomingRequests() {
+        foreach ((string name, Connection conn) in GetIncommingReads()) {
+
+            if (!conn.TryReadData(out string msg)) {
+                if (!conn.Connected) {
+                    Connections.Remove(name);
+                    Connections.AsParallel()
+                        .ForAll(Connection => {
+                            Connection.Value.TryWriteDate($"{name} left the chat");
+                        });
+                }
+                else
+                    conn.TryWriteDate("Message could not be read, try again");
+            }
+
+            Connections.AsParallel()
+                .ForAll(Connection => {
+                    if (Connection.Key == name) return;
+                    Connection.Value.TryWriteDate($"{name}: {msg}");
+                });
+        }
+
+    }
 }
 
 readonly struct CommandConnectionHandler {

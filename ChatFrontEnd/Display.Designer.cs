@@ -58,36 +58,39 @@
             btn_Send.TabIndex = 2;
             btn_Send.Text = "Send";
             btn_Send.UseVisualStyleBackColor = true;
+            btn_Send.MouseClick += this.on_SendClick;
             // 
             // txb_IpInput
             // 
-            txb_IpInput.Location = new Point(12, 56);
+            txb_IpInput.Location = new Point(12, 12);
             txb_IpInput.Name = "txb_IpInput";
             txb_IpInput.PlaceholderText = "IP";
-            txb_IpInput.Size = new Size(132, 23);
+            txb_IpInput.Size = new Size(306, 23);
             txb_IpInput.TabIndex = 3;
+            txb_IpInput.Leave += this.on_IPValidate;
             // 
             // txb_PortInput
             // 
-            txb_PortInput.Location = new Point(12, 85);
+            txb_PortInput.Location = new Point(12, 41);
             txb_PortInput.Name = "txb_PortInput";
             txb_PortInput.PlaceholderText = "Port";
-            txb_PortInput.Size = new Size(132, 23);
+            txb_PortInput.Size = new Size(306, 23);
             txb_PortInput.TabIndex = 4;
+            txb_PortInput.Leave += this.on_PortValidate;
             // 
             // txb_NicknameInput
             // 
-            txb_NicknameInput.Location = new Point(12, 170);
+            txb_NicknameInput.Location = new Point(12, 92);
             txb_NicknameInput.Name = "txb_NicknameInput";
             txb_NicknameInput.PlaceholderText = "Nickname";
-            txb_NicknameInput.Size = new Size(132, 23);
+            txb_NicknameInput.Size = new Size(306, 23);
             txb_NicknameInput.TabIndex = 5;
             // 
             // btn_Connect
             // 
-            btn_Connect.Location = new Point(166, 85);
+            btn_Connect.Location = new Point(12, 121);
             btn_Connect.Name = "btn_Connect";
-            btn_Connect.Size = new Size(75, 23);
+            btn_Connect.Size = new Size(306, 23);
             btn_Connect.TabIndex = 6;
             btn_Connect.Text = "Connect";
             btn_Connect.UseVisualStyleBackColor = true;
@@ -105,6 +108,7 @@
             this.Controls.Add(btn_Send);
             this.Controls.Add(txb_MessageInput);
             this.Controls.Add(rtb_MessageDisplay);
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.Name = "Display";
             this.Text = "Display";
             this.ResumeLayout(false);
