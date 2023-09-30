@@ -17,7 +17,9 @@ public class Program {
         chat_listener.Start();
 
         Thread comm_thread = StartCommandServer(comm_listener);
+        comm_thread.IsBackground = false;
         Thread chat_thread = StartChatServer(chat_listener);
+        chat_thread.IsBackground = false;
 
         bool quit = false;
 
@@ -78,27 +80,20 @@ public class Program {
 }
 
 class ChatServerService {
-    private object connection_semaphor = new object();
-    private Dictionary<string, Connection> _Connections = new Dictionary<string, Connection>();
+    private readonly object connection_semaphor = new object();
 
     private readonly TcpListener Listener = null!;
 
-    // O(1) lookup
-    public Dictionary<string, Connection> Connections {
-        get {
-            lock (connection_semaphor) return _Connections;
-        }
-        set {
-            lock (connection_semaphor) _Connections = value;
-        }
-    }
+    public List<Connection> Connections = new List<Connection>();
 
     public ChatServerService(TcpListener listener) => Listener = listener;
 
-    public IEnumerable<(string name, Connection conn)> GetIncommingReads() {
-        foreach ((string name, Connection conn) in Connections )
-            if (conn.Stream.DataAvailable) yield return (name, conn);
-        yield break;
+    public IEnumerable<Connection> GetIncommingReads() {
+        lock (connection_semaphor) {
+            foreach (Connection conn in Connections)
+                if (conn.Stream.DataAvailable) yield return conn;
+            yield break;
+        }
     }
 
     public void Handle() {
@@ -122,7 +117,9 @@ class ChatServerService {
                 }
 
                 string name = connection.Name;
-                Connections.Add(name, connection);
+                lock (connection_semaphor) {
+                    Connections.Add(connection);
+                }
                 Console.WriteLine($"Add conncetion to: {name}");
             });
             thread.Start();
@@ -130,27 +127,25 @@ class ChatServerService {
     }
 
     private void HandleIncomingRequests() {
-        foreach ((string name, Connection conn) in GetIncommingReads()) {
+            foreach (Connection conn in GetIncommingReads()) {
 
-            if (!conn.TryReadData(out string msg)) {
-                if (!conn.Connected) {
-                    Connections.Remove(name);
-                    Connections.AsParallel()
-                        .ForAll(Connection => {
-                            Connection.Value.TryWriteDate($"{name} left the chat");
-                        });
+                if (!conn.TryReadData(out string msg)) {
+                    if (!conn.Connected) {
+                        Connections.Remove(conn);
+                        Connections.AsParallel()
+                            .ForAll(Connection => {
+                                Connection.TryWriteDate($"{Connection.Name} left the chat");
+                            });
+                    }
+                    else
+                        conn.TryWriteDate("Message could not be read, try again");
                 }
-                else
-                    conn.TryWriteDate("Message could not be read, try again");
+
+                Connections.AsParallel()
+                    .ForAll(Connection => {
+                        Connection.TryWriteDate($"{conn.Name}: {msg}");
+                    });
             }
-
-            Connections.AsParallel()
-                .ForAll(Connection => {
-                    if (Connection.Key == name) return;
-                    Connection.Value.TryWriteDate($"{name}: {msg}");
-                });
-        }
-
     }
 }
 
@@ -224,58 +219,28 @@ readonly struct CommandConnectionHandler {
     }
 
     private void ChangeFGColor(string color) {
-        ConsoleColor fg_color;
-        switch (color.ToLower()) {
-            case "red":
-                fg_color = ConsoleColor.Red;
-                break;
-            case "white":
-                fg_color = ConsoleColor.White;
-                break;
-            case "black":
-                fg_color = ConsoleColor.Black;
-                break;
-            case "yellow":
-                fg_color = ConsoleColor.Yellow;
-                break;
-            case "blue":
-                fg_color = ConsoleColor.Blue;
-                break;
-            case "green":
-                fg_color = ConsoleColor.Green;
-                break;
-            default:
-                fg_color = ConsoleColor.White;
-                break;
-        }
+        var fg_color = color.ToLower() switch {
+            "red" => ConsoleColor.Red,
+            "white" => ConsoleColor.White,
+            "black" => ConsoleColor.Black,
+            "yellow" => ConsoleColor.Yellow,
+            "blue" => ConsoleColor.Blue,
+            "green" => ConsoleColor.Green,
+            _ => ConsoleColor.White,
+        };
         Console.ForegroundColor = fg_color;
     }
 
     private void ChangeBGColor(string color) {
-        ConsoleColor bg_color;
-        switch (color.ToLower()) {
-            case "red":
-                bg_color = ConsoleColor.Red;
-                break;
-            case "white":
-                bg_color = ConsoleColor.White;
-                break;
-            case "black":
-                bg_color = ConsoleColor.Black;
-                break;
-            case "yellow":
-                bg_color = ConsoleColor.Yellow;
-                break;
-            case "blue":
-                bg_color = ConsoleColor.Blue;
-                break;
-            case "green":
-                bg_color = ConsoleColor.Green;
-                break;
-            default:
-                bg_color = ConsoleColor.White;
-                break;
-        }
+        var bg_color = color.ToLower() switch {
+            "red" => ConsoleColor.Red,
+            "white" => ConsoleColor.White,
+            "black" => ConsoleColor.Black,
+            "yellow" => ConsoleColor.Yellow,
+            "blue" => ConsoleColor.Blue,
+            "green" => ConsoleColor.Green,
+            _ => ConsoleColor.White,
+        };
         Console.BackgroundColor = bg_color;
     }
 }

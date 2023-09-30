@@ -17,8 +17,8 @@ using ChatAbastraction;
 namespace ChatFrontEnd {
     public partial class Display : Form {
 
-        private object _stream_semaphor = new object();
-        private object _msg_queue_semaphor = new object();
+        private readonly object _stream_semaphor = new object();
+        private readonly object _msg_queue_semaphor = new object();
 
         private Queue<string> MessageDisplay = null!;
 
@@ -26,7 +26,7 @@ namespace ChatFrontEnd {
 
         public TcpClient Client = null!;
 
-        private string Name = null!;
+        private string DisplayName = null!;
 
         private bool ValidIp = false;
         private bool ValidPort = false;
@@ -63,7 +63,7 @@ namespace ChatFrontEnd {
                 return;
             }
 
-            Name = txb_NicknameInput.Text;
+            DisplayName = txb_NicknameInput.Text;
 
             TcpClient client = new TcpClient();
 
@@ -90,27 +90,30 @@ namespace ChatFrontEnd {
                             MessageDisplay.Enqueue(msg);
                         }
 
+                        string msg_disp = "";
                         lock (_msg_queue_semaphor) {
 
                             while (MessageDisplay.Count() > 10) {
                                 MessageDisplay.Dequeue();
                             }
 
-                            string msg_disp = "";
 
                             foreach (string message in MessageDisplay) {
                                 msg_disp += message + Environment.NewLine;
                             }
 
-                            rtb_MessageDisplay.Text = msg_disp;
                         }
+                        rtb_MessageDisplay.Invoke(() => {
+                            rtb_MessageDisplay.Text = msg_disp;
+                        });
                     }
                 });
+                ReadThread.IsBackground = true;
                 ReadThread.Start();
 
                 lock (_stream_semaphor) {
                     Writer = new BinaryWriter(Stream);
-                    Writer.Write(name);
+                    Writer.Write(DisplayName);
                 }
 
                 MessageBox.Show("Connection to server established", "Success", MessageBoxButtons.OK);
@@ -162,13 +165,10 @@ namespace ChatFrontEnd {
             if (msg.Length < 1) return;
 
             Writer.Write(msg);
-            lock (_msg_queue_semaphor) {
-                MessageDisplay.Enqueue($"{Name}: {msg}");
-            }
             txb_MessageInput.Text = "";
         }
 
-        ~Display() {
+        private void on_FormClosed(object sender, FormClosingEventArgs e) {
             Client?.Close();
             Stream?.Close();
             ReadThread?.Interrupt();

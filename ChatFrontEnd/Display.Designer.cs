@@ -111,6 +111,7 @@
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.Name = "Display";
             this.Text = "Display";
+            this.FormClosing += this.on_FormClosed;
             this.ResumeLayout(false);
             this.PerformLayout();
         }
