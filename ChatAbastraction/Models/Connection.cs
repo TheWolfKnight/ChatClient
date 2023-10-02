@@ -26,16 +26,21 @@ namespace ChatAbastraction.Models
         private BinaryReader Reader;
         private BinaryWriter Writer;
 
-        public Connection(string name, Socket conn)
+        public Connection(Socket conn)
         {
-            _name = name;
             Conn = conn;
             Stream = new NetworkStream(conn);
             Reader = new BinaryReader(Stream);
             Writer = new BinaryWriter(Stream);
+
+            Writer.Write("Send name");
+            string name = Reader.ReadString();
+
+            if (string.IsNullOrEmpty(name)) throw new Exception("Could not get name");
+            Name = name;
         }
 
-        public bool WriteDate(string data)
+        public bool TryWriteData(string data)
         {
             try
             {
@@ -49,7 +54,7 @@ namespace ChatAbastraction.Models
             }
         }
 
-        public bool TryReadData(out string result)
+        public readonly bool TryReadData(out string result)
         {
             if (!Stream.DataAvailable)
             {
